@@ -11,4 +11,9 @@ export type PageProps<
     auth: {
         user: User;
     };
+    // Flash mesajlarini buraya ekliyoruz
+    flash: {
+        success: string | null;
+        error: string | null;
+    };
 };
