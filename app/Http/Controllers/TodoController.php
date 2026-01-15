@@ -4,13 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Todo;
-use App\Models\User;
 use Inertia\Inertia;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Gate;
-use App\Http\Requests\StoreTodoRequest;
-use App\Http\Requests\UpdateTodoRequest;
-use App\Http\Requests\UpdateTodoStatusRequest;
 
 class TodoController extends Controller
 {
@@ -20,15 +15,13 @@ class TodoController extends Controller
         $user = $request->user();
 
         if($user->isAdmin()) {
-            
             $todos = Todo::with('user')
                 ->withTrashed()
                 ->orderBy('created_at', 'desc')
                 ->paginate(10); 
         } else {
-            
             $todos = Todo::with('user')
-                ->withTrashed() // silinen tasklari da getir
+                ->withTrashed()
                 ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(10);
@@ -41,11 +34,14 @@ class TodoController extends Controller
         ]);
     }
 
-    public function store(StoreTodoRequest $request)
+    public function store(Request $request)
     {
         Gate::authorize('create', Todo::class);
 
-        $validated = $request->validated();    
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
+        ]);    
             
         Todo::create([
             'title' => $validated['title'],
@@ -54,17 +50,20 @@ class TodoController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return redirect()->route('todos.index')->with('success', 'Task created successfully!');
+        return redirect()->route('todos.index')->with('success', '✅ Task created successfully!');
     }
 
-    public function update(UpdateTodoRequest $request, Todo $todo)
+    public function update(Request $request, Todo $todo)
     {
         Gate::authorize('update', $todo);
 
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
 
         $todo->update($validated);
-        return redirect()->route('todos.index')->with('success', 'Task updated!');
+        return redirect()->route('todos.index')->with('success', '✅ Task updated successfully!');
     }
 
     public function destroy(Todo $todo)
@@ -72,31 +71,36 @@ class TodoController extends Controller
         Gate::authorize('delete', $todo);
 
         $todo->delete();
-        return back()->with('success', 'Task moved to trash!');
+        return back()->with('success', '🗑️ Task moved to trash!');
     }
 
     public function restore($id)
     {
         $todo = Todo::withTrashed()->findOrFail($id);
         Gate::authorize('restore', $todo);
+        
         $todo->restore();
-        return back()->with('success', 'Task restored successfully!');
+        return back()->with('success', '↺ Task restored successfully!');
     }
 
     public function forceDelete($id)
     {
         $todo = Todo::withTrashed()->findOrFail($id);
         Gate::authorize('forceDelete', $todo);
+        
         $todo->forceDelete();
-        return back()->with('success', 'Task permanently deleted!');
+        return back()->with('success', '❌ Task permanently deleted!');
     }
 
-    public function updateStatus(UpdateTodoStatusRequest $request, Todo $todo)
+    public function updateStatus(Request $request, Todo $todo)
     {
         Gate::authorize('update', $todo);
 
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'status' => 'required|in:todo,in_progress,done'
+        ]);
+
         $todo->update(['status' => $validated['status']]);
-        return back();
+        return back()->with('success', '✅ Task status updated!');
     }
 }

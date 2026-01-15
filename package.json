@@ -38,6 +38,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
-        "@hello-pangea/dnd": "^18.0.1"
+        "@hello-pangea/dnd": "^18.0.1",
+        "react-hot-toast": "^2.6.0"
     }
 }

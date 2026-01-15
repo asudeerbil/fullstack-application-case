@@ -31,18 +31,29 @@ export default function Index({ todos, isAdmin, auth }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
     const [showTrash, setShowTrash] = useState(false);
+    const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
     // Backend verisi değiştikçe board'u güncelle
     useEffect(() => {
         setBoardData(todos.data);
     }, [todos.data]);
 
+    // Flash mesajlarını bildirim olarak göster
+    useEffect(() => {
+        if (flash?.success) {
+            setNotification({ type: 'success', message: flash.success });
+            setTimeout(() => setNotification(null), 4000);
+        }
+        if (flash?.error) {
+            setNotification({ type: 'error', message: flash.error });
+            setTimeout(() => setNotification(null), 4000);
+        }
+    }, [flash]);
+
     const { data, setData, post, put, processing, errors, reset } = useForm({
         title: '',
         description: '',
     });
-
-
 
     // Düzenleme moduna girildiğinde form verilerini doldur
     useEffect(() => {
@@ -140,7 +151,6 @@ export default function Index({ todos, isAdmin, auth }: Props) {
     };
 
     return (
-
         <div className="min-h-screen bg-slate-50 p-8 font-sans">
             <Head title="Todo" />
             <div className="max-w-7xl mx-auto">
@@ -181,9 +191,28 @@ export default function Index({ todos, isAdmin, auth }: Props) {
                     </div>
                 </div>
 
-                {flash?.success && (
-                    <div className="mb-6 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-r shadow-sm">
-                        {flash.success}
+                {/* Notification Toast */}
+                {notification && (
+                    <div className={`fixed top-4 right-4 z-50 max-w-md animate-slide-in ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                        } text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3`}>
+                        {notification.type === 'success' ? (
+                            <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        ) : (
+                            <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        )}
+                        <span className="font-medium">{notification.message}</span>
+                        <button
+                            onClick={() => setNotification(null)}
+                            className="ml-auto hover:bg-white/20 rounded p-1 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                 )}
 
@@ -380,6 +409,22 @@ export default function Index({ todos, isAdmin, auth }: Props) {
                     </div>
                 </div>
             )}
+
+            <style>{`
+                @keyframes slide-in {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                .animate-slide-in {
+                    animation: slide-in 0.3s ease-out;
+                }
+            `}</style>
         </div>
     );
 }
