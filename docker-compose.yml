@@ -7,8 +7,8 @@ services:
       dockerfile: Dockerfile
     container_name: laravel_app
     volumes:
-      - .:/var/www # Proje kodlarını senkronize et
-      - /var/www/node_modules # <--- YENİ EKLENEN SATIR (Hızlandırıcı)
+      - .:/var/www 
+      - /var/www/node_modules 
     working_dir: /var/www
     depends_on:
       - mysql
